@@ -14,7 +14,7 @@ public class Demonstrator {
 
         //load configuration file path from the command line if it was provided
         //otherwise, fall back to the default config file location
-        String configPath = args.length > 0 ? args[0] : "Task1/src/main/java/com/mycompany/app/config.txt";
+        String configPath = args.length > 0 ? args[0] : "Task1And3Code/src/main/java/com/mycompany/app/config.txt";
         GameConfig config = GameConfig.load(configPath);
 
         //create the core domain objects required by the game
