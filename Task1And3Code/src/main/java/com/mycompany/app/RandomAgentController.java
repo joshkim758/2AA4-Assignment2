@@ -8,11 +8,9 @@ import java.util.List;
 import java.util.Random;
 
 public class RandomAgentController implements PlayerController {
-    private interface AgentMove {
-        boolean execute();
-    }
-
     private final Random random;
+    private final List<AbstractAgentRule> rules;
+    private final AbstractConstraintHandler constraintChain;
 
     public RandomAgentController() {
         this(new Random());
@@ -20,60 +18,66 @@ public class RandomAgentController implements PlayerController {
 
     public RandomAgentController(Random random) {
         this.random = random;
+        this.rules = new ArrayList<>();
+        this.rules.add(new BuildCityRule(random));
+        this.rules.add(new BuildSettlementRule(random));
+        this.rules.add(new BuildRoadRule(random));
+        this.constraintChain = createConstraintChain();
+    }
+
+
+    private AbstractConstraintHandler createConstraintChain() {
+        AbstractConstraintHandler spendCards = new SpendCardsConstraintHandler(rules, random);
+        AbstractConstraintHandler connectRoadSegments = new ConnectRoadSegmentsConstraintHandler();
+        AbstractConstraintHandler defendLongestRoad = new DefendLongestRoadConstraintHandler();
+
+        spendCards.setNext(connectRoadSegments).setNext(defendLongestRoad);
+        return spendCards;
     }
 
     @Override
     public void takeTurn(Game game, Player player) {
-        game.performRoll(player);
-
-        while (player.totalCards() > 7) {
-            List<AgentMove> legalMoves = collectLegalMoves(game, player);
-            if (legalMoves.isEmpty()) {
-                break;
-            }
-            legalMoves.get(random.nextInt(legalMoves.size())).execute();
+        if (!game.performRoll(player)) {
+            return;
         }
 
-        if (player.totalCards() <= 7) {
-            List<AgentMove> legalMoves = collectLegalMoves(game, player);
-            if (!legalMoves.isEmpty() && random.nextDouble() < 0.70) {
-                legalMoves.get(random.nextInt(legalMoves.size())).execute();
-            }
+        while (constraintChain.handle(game, player)) {
+            //resolve all constraints before normal value based rules
+        }
+
+        RuleEvaluation evaluation = chooseBestRule(game, player);
+        if (evaluation != null) {
+            evaluation.rule().executeRule(game, player, evaluation.targetId());
         }
 
         game.log(player, "Go.");
     }
 
-    private List<AgentMove> collectLegalMoves(Game game, Player player) {
-        List<AgentMove> legalMoves = new ArrayList<>();
+    
+    private RuleEvaluation chooseBestRule(Game game, Player player) {
+        List<RuleEvaluation> bestEvaluations = new ArrayList<>();
+        double bestValue = -1.0;
 
-        if (player.getCitiesLeft() > 0 && player.hasResources(Game.CITY_COST)) {
-            for (Node node : game.board().getNodes()) {
-                final int nodeId = node.getId();
-                if (game.board().canUpgradeToCity(player.id(), nodeId)) {
-                    legalMoves.add(() -> game.upgradeToCity(player, nodeId));
-                }
+        for (AbstractAgentRule rule : rules) {
+            RuleEvaluation evaluation = rule.evaluateRule(game, player);
+            if (evaluation == null) {
+                continue;
+            }
+
+            if (evaluation.value() > bestValue) {
+                bestEvaluations.clear();
+                bestEvaluations.add(evaluation);
+                bestValue = evaluation.value();
+            } 
+            else if (Double.compare(evaluation.value(), bestValue) == 0) {
+                bestEvaluations.add(evaluation);
             }
         }
 
-        if (player.getSettlementsLeft() > 0 && player.hasResources(Game.SETTLEMENT_COST)) {
-            for (int nodeId = 0; nodeId < game.board().getNodes().length; nodeId++) {
-                final int candidateNodeId = nodeId;
-                if (game.board().canPlaceSettlement(player.id(), candidateNodeId, game.phase())) {
-                    legalMoves.add(() -> game.buildSettlement(player, candidateNodeId));
-                }
-            }
+        if (bestEvaluations.isEmpty()) {
+            return null;
         }
-
-        if (player.getRoadsLeft() > 0 && player.hasResources(Game.ROAD_COST)) {
-            for (Edge edge : game.board().getEdges()) {
-                final int edgeId = edge.getId();
-                if (game.board().canPlaceRoad(player.id(), edgeId)) {
-                    legalMoves.add(() -> game.buildRoad(player, edgeId));
-                }
-            }
-        }
-
-        return legalMoves;
+        return bestEvaluations.get(random.nextInt(bestEvaluations.size()));
     }
+
 }
