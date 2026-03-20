@@ -25,6 +25,8 @@ public class GameConfig {
         return turns;
     }
 
+
+    
     public static GameConfig load(String path) {
         try {
             String raw = Files.readString(Path.of(path));

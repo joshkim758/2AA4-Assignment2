@@ -50,4 +50,5 @@ public class HumanController implements PlayerController {
             }
         }
     }
+    
 }

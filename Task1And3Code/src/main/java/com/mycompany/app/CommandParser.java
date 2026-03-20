@@ -35,7 +35,7 @@ public class CommandParser {
         }
         if (UNDO.matcher(raw).matches()) {
             if (history == null) {
-                throw new IllegalArgumentException("Undo is not available right now.");
+                throw new IllegalArgumentException("undo is not available right now.");
             }
             return new UndoCommand(history);
         }
