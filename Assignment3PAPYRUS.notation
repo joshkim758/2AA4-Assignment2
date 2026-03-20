@@ -1975,7 +1975,7 @@
       <layoutConstraint xmi:type="notation:Bounds" xmi:id="_YnBFMSQpEfG37uRKbCPEoA"/>
     </children>
     <element xmi:type="uml:Class" href="Assignment3PAPYRUS.uml#_Tfw3sAivEfG_rqa4OBbQJg"/>
-    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Ym-o4SQpEfG37uRKbCPEoA" x="1480" y="-280"/>
+    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Ym-o4SQpEfG37uRKbCPEoA" x="740" y="-320" width="8" height="8"/>
   </children>
   <styles xmi:type="notation:StringValueStyle" xmi:id="_vvxmIQiuEfG_rqa4OBbQJg" name="diagram_compatibility_version" stringValue="1.4.0"/>
   <styles xmi:type="notation:DiagramStyle" xmi:id="_vvxmIgiuEfG_rqa4OBbQJg"/>
